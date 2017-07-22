@@ -62,6 +62,8 @@ class OptimizeFW(Firework):
         super(OptimizeFW, self).__init__(t, parents=parents, name="{}-{}".
                                          format(structure.composition.reduced_formula, name),
                                          **kwargs)
+        self.spec["_files_in"] = {"structure": "POSCAR", "chgcar": "CHGCAR"}
+        self.spec["_files_out"] = {"structure": "CONTCAR*", "chgcar": "CHGCAR*"}
 
 
 class StaticFW(Firework):
@@ -105,6 +107,8 @@ class StaticFW(Firework):
         t.append(VaspToDb(db_file=db_file, additional_fields={"task_label": name}))
         super(StaticFW, self).__init__(t, parents=parents, name="{}-{}".format(
             structure.composition.reduced_formula, name), **kwargs)
+        self.spec["_files_in"] = {"structure": "POSCAR", "chgcar": "CHGCAR"}
+        self.spec["_files_out"] = {"structure": "CONTCAR*", "chgcar": "CHGCAR*"}
 
 
 class HSEBSFW(Firework):
@@ -136,6 +140,7 @@ class HSEBSFW(Firework):
         t.append(VaspToDb(db_file=db_file, additional_fields={"task_label": name}))
         super(HSEBSFW, self).__init__(t, parents=parents, name="{}-{}".format(
             structure.composition.reduced_formula, name), **kwargs)
+        self.spec["_files_in"] = {"structure": "POSCAR", "chgcar": "CHGCAR"}
 
 
 class NonSCFFW(Firework):
@@ -174,6 +179,7 @@ class NonSCFFW(Firework):
 
         super(NonSCFFW, self).__init__(t, parents=parents, name="%s-%s %s" % (
             structure.composition.reduced_formula, name, mode), **kwargs)
+        self.spec["_files_in"] = {"structure": "POSCAR", "chgcar": "CHGCAR"}
 
 
 class LepsFW(Firework):
@@ -423,7 +429,6 @@ class BoltztrapFW(Firework):
             structure.composition.reduced_formula, name), **kwargs)
 
 
-# TODO: @shyuep: Please do a code review before I look at this. -computron
 class NEBRelaxationFW(Firework):
     """
     Relaxation Firework in NEB Workflow.
@@ -479,7 +484,6 @@ class NEBRelaxationFW(Firework):
         super(NEBRelaxationFW, self).__init__(tasks, spec=spec, name=label, **kwargs)
 
 
-# TODO: @shyuep: Please do a code review before I look at this. -computron
 class NEBFW(Firework):
     """
     CI-NEB Firework in NEB Workflow.
