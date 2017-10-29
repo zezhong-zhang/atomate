@@ -28,6 +28,69 @@ __email__ = 'ajain@lbl.gov'
 
 
 @explicit_serialize
+class WriteVaspInput(FiretaskBase):
+    """
+        Create VASP input files, using implementations of pymatgen's
+        AbstractVaspInputSet. An input set
+        can be provided as an object or as a String/parameter combo.
+
+        Required params:
+            structure (Structure): structure
+            vasp_input_set (AbstractVaspInputSet or str): Either a VaspInputSet object or a string
+                name for the VASP input set (e.g., "MPRelaxSet").
+
+        Optional params:
+            vasp_input_params (dict): When using a string name for VASP input set, use this as a dict
+                to specify kwargs for instantiating the input set parameters. For example, if you want
+                to change the user_incar_settings, you should provide: {"user_incar_settings": ...}.
+                This setting is ignored if you provide the full object representation of a VaspInputSet
+                rather than a String.
+        """
+
+    required_params = ["structure", "vasp_input_set"]
+    optional_params = ["vasp_input_params"]
+
+    def run_task(self, fw_spec):
+        # if a full VaspInputSet object was provided
+        if hasattr(self['vasp_input_set'], 'write_input'):
+            vis = self['vasp_input_set']
+
+        # if VaspInputSet String + parameters was provided
+        else:
+            vis_cls = load_class("pymatgen.io.vasp.sets",
+                                 self["vasp_input_set"])
+            vis = vis_cls(self["structure"],
+                          **self.get("vasp_input_params", {}))
+        vis.write_input(".")
+    optional_params = ["prev_calc_dir", "reciprocal_density", "small_gap_multiply", "standardize",
+                       "sym_prec", "international_monoclinic", "lepsilon", "other_params"]
+
+    def run_task(self, fw_spec):
+        lepsilon = self.get("lepsilon")
+
+        default_reciprocal_density = 200 if lepsilon else 100  # more k-points for dielectric calc.
+        other_params = self.get("other_params", {})
+        user_incar_settings = other_params.get("user_incar_settings", {})
+
+        # for lepsilon runs, set EDIFF to 1E-5 unless user says otherwise
+        if lepsilon and "EDIFF" not in user_incar_settings and \
+                        "EDIFF_PER_ATOM" not in user_incar_settings:
+            if "user_incar_settings" not in other_params:
+                other_params["user_incar_settings"] = {}
+            other_params["user_incar_settings"]["EDIFF"] = 1E-5
+
+        vis = MPStaticSet.from_prev_calc(prev_calc_dir=self.get("prev_calc_dir", "."),
+                                         reciprocal_density=self.get("reciprocal_density",
+                                                                     default_reciprocal_density),
+                                         small_gap_multiply=self.get("small_gap_multiply", None),
+                                         standardize=self.get("standardize", False),
+                                         sym_prec=self.get("sym_prec", 0.1),
+                                         international_monoclinic=self.get(
+                                             "international_monoclinic", True),
+                                         lepsilon=lepsilon, **other_params)
+        vis.write_input(".")
+
+@explicit_serialize
 class WriteVaspFromIOSet(FiretaskBase):
     """
     Create VASP input files using implementations of pymatgen's AbstractVaspInputSet. An input set 

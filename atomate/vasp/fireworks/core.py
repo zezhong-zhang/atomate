@@ -19,7 +19,7 @@ from atomate.vasp.firetasks.parse_outputs import VaspToDb, BoltztrapToDb
 from atomate.vasp.firetasks.run_calc import RunVaspCustodian, RunBoltztrap
 from atomate.vasp.firetasks.write_inputs import WriteNormalmodeDisplacedPoscar, \
     WriteTransmutedStructureIOSet, WriteVaspFromIOSet, WriteVaspHSEBSFromPrev, \
-    WriteVaspNSCFFromPrev, WriteVaspSOCFromPrev, WriteVaspStaticFromPrev
+    WriteVaspNSCFFromPrev, WriteVaspSOCFromPrev, WriteVaspStaticFromPrev, WriteVaspInput
 from atomate.vasp.firetasks.neb_tasks import WriteNEBFromImages, WriteNEBFromEndpoints
 
 
@@ -62,8 +62,18 @@ class OptimizeFW(Firework):
         super(OptimizeFW, self).__init__(t, parents=parents, name="{}-{}".
                                          format(structure.composition.reduced_formula, name),
                                          **kwargs)
-        self.spec["_files_in"] = {"structure": "POSCAR", "chgcar": "CHGCAR"}
-        self.spec["_files_out"] = {"structure": "CONTCAR*", "chgcar": "CHGCAR*"}
+        self.spec["_files_in"] = {
+            "structure": "POSCAR",
+            "chgcar": "CHGCAR"
+        }
+        self.spec["_files_out"] = {
+            "structure": "CONTCAR*",
+            "CHGCAR": "CHGCAR*",
+            "INCAR": "INCAR*",
+            "KPOINTS": "KPOINTS*",
+            "POTCAR": "POTCAR*",
+            "vasprun": "vasprun.xml*"
+        }
 
 
 class StaticFW(Firework):
@@ -107,8 +117,23 @@ class StaticFW(Firework):
         t.append(VaspToDb(db_file=db_file, additional_fields={"task_label": name}))
         super(StaticFW, self).__init__(t, parents=parents, name="{}-{}".format(
             structure.composition.reduced_formula, name), **kwargs)
-        self.spec["_files_in"] = {"structure": "POSCAR", "chgcar": "CHGCAR"}
-        self.spec["_files_out"] = {"structure": "CONTCAR*", "chgcar": "CHGCAR*"}
+        self.spec["_files_in"] = {
+            "structure": "POSCAR",
+            "CHGCAR": "CHGCAR",
+            "INCAR": "INCAR",
+            "KPOINTS": "KPOINTS",
+            "POTCAR": "POTCAR",
+            "vasprun": "vasprun.xml"
+        }
+        self.spec["_files_out"] = {
+            "structure": "CONTCAR*",
+            "CHGCAR": "CHGCAR*",
+            "INCAR": "INCAR*",
+            "KPOINTS": "KPOINTS*",
+            "POTCAR": "POTCAR*",
+            "vasprun": "vasprun.xml*"
+        }
+
 
 
 class HSEBSFW(Firework):
